@@ -118,8 +118,8 @@ func (p *OrderProcessor) ProcessOrders() {
 
 // ProcessOrdersWithWorkers обрабатывает заказы параллельно
 func (p *OrderProcessor) ProcessOrdersWithWorkers(ctx context.Context, orders []models.Order) {
-	// Канал для передачи заказов воркерам
-	orderChan := make(chan models.Order, len(orders))
+	// Оптимизированный размер канала для уменьшения потребления памяти
+	orderChan := make(chan models.Order, p.workerCount*2)
 
 	// WaitGroup для ожидания завершения всех воркеров
 	var wg sync.WaitGroup

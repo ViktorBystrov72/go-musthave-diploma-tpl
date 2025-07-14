@@ -1,6 +1,8 @@
 package server
 
 import (
+	"net/http/pprof"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/vglushak/go-musthave-diploma-tpl/internal/middleware"
 	"github.com/vglushak/go-musthave-diploma-tpl/internal/services"
@@ -20,6 +22,20 @@ func NewRouter(storage Storage, authService *services.AuthService, accrualServic
 
 	// Middleware
 	router.Use(middleware.GzipMiddleware)
+
+	// Pprof роутер
+	pprofRouter := chi.NewRouter()
+	pprofRouter.HandleFunc("/", pprof.Index)
+	pprofRouter.HandleFunc("/cmdline", pprof.Cmdline)
+	pprofRouter.HandleFunc("/profile", pprof.Profile)
+	pprofRouter.HandleFunc("/symbol", pprof.Symbol)
+	pprofRouter.HandleFunc("/trace", pprof.Trace)
+	pprofRouter.HandleFunc("/heap", pprof.Handler("heap").ServeHTTP)
+	pprofRouter.HandleFunc("/goroutine", pprof.Handler("goroutine").ServeHTTP)
+	pprofRouter.HandleFunc("/block", pprof.Handler("block").ServeHTTP)
+	pprofRouter.HandleFunc("/threadcreate", pprof.Handler("threadcreate").ServeHTTP)
+	// Монтируем pprof роутер
+	router.Mount("/debug/pprof", pprofRouter)
 
 	// Все маршруты /api/user
 	router.Route("/api/user", func(r chi.Router) {

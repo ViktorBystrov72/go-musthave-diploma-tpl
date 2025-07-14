@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -65,7 +66,18 @@ func main() {
 	srv := &http.Server{
 		Addr:    cfg.RunAddress,
 		Handler: router.GetRouter(),
+		// Оптимизация для уменьшения потребления памяти
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+		// Уменьшаем размер буферов
+		MaxHeaderBytes: 1 << 20, // 1MB
 	}
+
+	// Запуск отдельного pprof-сервера
+	go func() {
+		_ = http.ListenAndServe("localhost:6060", nil)
+	}()
 
 	// Обработкой сигналов для graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
